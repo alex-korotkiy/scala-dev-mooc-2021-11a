@@ -42,7 +42,7 @@ object UserService{
         
     }
 
-    val live: ZLayer[UserRepository.UserRepository, Nothing, UserService] = ???
+    val live: ZLayer[UserRepository.UserRepository, Nothing, UserService] = ZLayer.fromService(repo => new Impl(repo))
 }
 
 case class UserDTO(user: User, roles: Set[Role])

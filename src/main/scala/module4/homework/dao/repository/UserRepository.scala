@@ -59,18 +59,23 @@ object UserRepository{
         }
 
         def updateUser(user: User): Result[Unit] =
-            dc.run(userSchema.update(lift(user))).map(_ => ())
+            dc.run(userSchema.filter(_.id == lift(user.id)).update(lift(user))).map(_ => ())
         
         def deleteUser(user: User): Result[Unit] =
-            dc.run(userSchema.filter(_.id == lift(user.id))).map(_ => ())
+            dc.run(userSchema.filter(_.id == lift(user.id)).delete).map(_ => ())
         
         def findByLastName(lastName: String): Result[List[User]] =
             dc.run(userSchema.filter(_.lastName == lift(lastName)))
         
         def list(): Result[List[User]] = dc.run(userSchema)
-        
+
         def userRoles(userId: UserId): Result[List[Role]] =
-            dc.run(roleSchema)
+            dc.run(
+                for {
+                    userToRole <- userToRoleSchema.filter(_.userId == lift(userId.id))
+                    roles <- roleSchema.join(_.code == userToRole.roleId)
+                } yield roles
+            )
         
         def insertRoleToUser(roleCode: RoleCode, userId: UserId): Result[Unit] =
             dc.run(userToRoleSchema.insert(lift(UserToRole(roleCode.code, userId.id)))).map(_ => ())
